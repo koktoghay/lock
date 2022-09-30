@@ -1,5 +1,6 @@
 package com.kidult.practices.lock.service;
 
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.kidult.practices.lock.domain.TDistributedLock;
 import com.kidult.practices.lock.domain.TGoods;
@@ -11,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -35,6 +36,30 @@ public class DBLockService {
     @Autowired
     private TGoodsMapper goodsMapper;
 
+    public boolean addLock(String businessKey, String businessDesc) {
+        boolean lock;
+        String lockId = UniqueID.INSTANCE.nextId();
+        try {
+            TDistributedLock distributedLock = new TDistributedLock();
+            distributedLock.setId(lockId);
+            distributedLock.setBusinessKey(businessKey);
+            distributedLock.setBusinessDesc(businessDesc);
+            lockMapper.insert(distributedLock);
+            lock = true;
+        } catch (Exception e) {
+            lock = false;
+            log.error("获取锁异常,e:", e);
+        } finally {
+            deleteLock(lockId);
+        }
+        return lock;
+    }
+
+    public void deleteLock(String id) {
+        lockMapper.deleteById(id);
+    }
+
+
     public int updateGoods(String id, int stock) {
         LambdaUpdateWrapper<TGoods> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(TGoods::getId, id);
@@ -43,38 +68,18 @@ public class DBLockService {
         return goodsMapper.update(goods, updateWrapper);
     }
 
-
-    public void addLock(TDistributedLock lock) {
-        lockMapper.insert(lock);
-    }
-
-    public void deleteLock(String id) {
-        lockMapper.deleteById(id);
-    }
-
+    @Transactional(rollbackFor = Exception.class, timeout = 50)
     public boolean subGoodsStock(String id) {
-        boolean lock = false;
+        boolean lock;
         try {
-            Connection connection = jdbcTemplate.getDataSource().getConnection();
-
-            log.info("before set autoCommit=" + connection.getAutoCommit());
-
-
-            connection.setAutoCommit(true);
-//            connection.commit();
-
-            log.info("after set autoCommit=" + connection.getAutoCommit());
-
-            StringBuilder sqlBuild = new StringBuilder();
-            sqlBuild.append("select stock from t_goods where id='" + id + "' for update;\n");
-            jdbcTemplate.execute(sqlBuild.toString());
-
-            sqlBuild = new StringBuilder();
-            sqlBuild.append("update t_goods set stock=stock-1 where id='" + id + "';\n");
-            jdbcTemplate.execute(sqlBuild.toString());
+            TGoods goods = goodsMapper.selectForUpdate(id);
+            log.info("subGoodsStock goods:{}", JSON.toJSONString(goods));
+            if (goods.getStock() > 0) {
+                int updateFlag = goodsMapper.subGoodsStock(goods.getId());
+                log.info("subGoodsStock updateFlag:{}", updateFlag);
+            }
             lock = true;
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("获取锁异常,e:", e);
             lock = false;
         }

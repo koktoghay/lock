@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Created by tommy on 2022/09/29.
@@ -19,6 +20,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/dbLock")
 public class DBLockController implements Serializable {
+
+    static int concurrencyThreadCount = 5;
 
     @Autowired
     private DBLockService dbLockService;
@@ -30,8 +33,22 @@ public class DBLockController implements Serializable {
 
     @GetMapping("/subGoodsStock")
     public Object subGoodsStock(String goodsId) {
-        boolean handlerFlag = dbLockService.subGoodsStock(goodsId);
-        log.info("handlerFlag:{}", handlerFlag);
+        CountDownLatch downLatch = new CountDownLatch(concurrencyThreadCount);
+        for (int i = 0; i < concurrencyThreadCount; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        downLatch.await();
+                        boolean handlerFlag = dbLockService.subGoodsStock(goodsId);
+                        log.info("handlerFlag:{}", handlerFlag);
+                    } catch (Exception e) {
+                        log.error("subGoodsStock ex:", e);
+                    }
+                }
+            }).start();
+            downLatch.countDown();
+        }
         return 1;
     }
 

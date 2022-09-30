@@ -2,4 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.kidult.practices.lock.mapper.TGoodsMapper">
 
+    <select id="selectForUpdate" resultType="com.kidult.practices.lock.domain.TGoods">
+        select * from t_goods where id=#{goodsId} for update
+    </select>
+
+    <update id="subGoodsStock">
+        update t_goods set stock=stock-1 where id=#{goodsId} and stock>0
+    </update>
 </mapper>
