@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 @Slf4j
 @RestController
 @RequestMapping("/dbLock")
-public class DBLockController implements Serializable {
+public class DBLockController {
 
     static int concurrencyThreadCount = 5;
 

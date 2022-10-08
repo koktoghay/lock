@@ -30,7 +30,7 @@ CREATE TABLE t_goods (
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_bin COMMENT ='商品表';
 
-insert into t_goods(id, title, stock, price, create_time) values (1, '电饭锅', 100, 100, now());
+insert into t_goods(id, title, stock, price, create_time) values (1, '电饭锅', 3, 100, now());
 ```
 在一个事务中，通过for update完成加锁操作，然后在库存大于0的情况下进行更新的操作
  
