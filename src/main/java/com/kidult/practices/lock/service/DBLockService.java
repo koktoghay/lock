@@ -36,6 +36,13 @@ public class DBLockService {
     @Autowired
     private TGoodsMapper goodsMapper;
 
+    /**
+     * 锁表实现
+     *
+     * @param businessKey
+     * @param businessDesc
+     * @return
+     */
     public boolean addLock(String businessKey, String businessDesc) {
         boolean lock;
         String lockId = UniqueID.INSTANCE.nextId();
@@ -50,7 +57,7 @@ public class DBLockService {
             lock = false;
             log.error("获取锁异常,e:", e);
         } finally {
-            deleteLock(lockId);
+//            deleteLock(lockId);
         }
         return lock;
     }
@@ -68,6 +75,12 @@ public class DBLockService {
         return goodsMapper.update(goods, updateWrapper);
     }
 
+    /**
+     * 悲观锁实现
+     *
+     * @param id
+     * @return
+     */
     @Transactional(rollbackFor = Exception.class, timeout = 50)
     public boolean subGoodsStock(String id) {
         boolean lock;
@@ -76,6 +89,30 @@ public class DBLockService {
             log.info("subGoodsStock goods:{}", JSON.toJSONString(goods));
             if (goods.getStock() > 0) {
                 int updateFlag = goodsMapper.subGoodsStock(goods.getId());
+                log.info("subGoodsStock updateFlag:{}", updateFlag);
+            }
+            lock = true;
+        } catch (Exception e) {
+            log.error("获取锁异常,e:", e);
+            lock = false;
+        }
+        return lock;
+    }
+
+    /**
+     * 乐观锁实现
+     *
+     * @param id
+     * @param version
+     * @return
+     */
+    public boolean subGoodsStock(String id, int version) {
+        boolean lock;
+        try {
+            TGoods goods = goodsMapper.selectGoods(id);
+            log.info("subGoodsStock goods:{}", JSON.toJSONString(goods));
+            if (goods.getStock() > 0) {
+                int updateFlag = goodsMapper.updateGoods(id, version);
                 log.info("subGoodsStock updateFlag:{}", updateFlag);
             }
             lock = true;

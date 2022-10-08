@@ -9,4 +9,14 @@
     <update id="subGoodsStock">
         update t_goods set stock=stock-1 where id=#{goodsId} and stock>0
     </update>
+
+    <select id="selectGoods" resultType="com.kidult.practices.lock.domain.TGoods">
+        select * from t_goods where id=#{goodsId} and stock>0
+    </select>
+
+    <update id="updateGoods">
+        update t_goods
+        set stock=stock - 1, version=version + 1
+        where id = #{goodsId} and version = #{version}
+    </update>
 </mapper>

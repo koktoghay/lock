@@ -52,6 +52,27 @@ public class DBLockController implements Serializable {
         return 1;
     }
 
+    @GetMapping("/subGoodsStockByVersion")
+    public Object subGoodsStockByVersion(String goodsId, int version) {
+        CountDownLatch downLatch = new CountDownLatch(concurrencyThreadCount);
+        for (int i = 0; i < concurrencyThreadCount; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        downLatch.await();
+                        boolean handlerFlag = dbLockService.subGoodsStock(goodsId, version);
+                        log.info("handlerFlag:{}", handlerFlag);
+                    } catch (Exception e) {
+                        log.error("subGoodsStock ex:", e);
+                    }
+                }
+            }).start();
+            downLatch.countDown();
+        }
+        return 1;
+    }
+
     @GetMapping("/queryLockList")
     public Object queryLockList() {
         List<TDistributedLock> lockList = dbLockService.queryLockList();
