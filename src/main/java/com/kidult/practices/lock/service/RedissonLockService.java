@@ -26,8 +26,8 @@ public class RedissonLockService {
      * 试图获取锁
      *
      * @param lockKey
-     * @param waitTime  等待时间
-     * @param leaseTime
+     * @param waitTime  获取锁的等待时间
+     * @param leaseTime 锁的任务执行时长
      * @param unit
      * @return
      */
@@ -53,6 +53,8 @@ public class RedissonLockService {
     }
 
     /**
+     * 获取锁，执行任务操作
+     *
      * @param invoker
      * @param waitTime
      * @param leaseTime
