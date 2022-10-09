@@ -1,6 +1,7 @@
 package com.kidult.practices.lock.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,4 +21,50 @@ public class RedissonLockService {
     public void setKv(String key, String value) {
         redissonClient.getBucket(key).set(value, 1, TimeUnit.MINUTES);
     }
+
+    /**
+     * 试图获取锁
+     *
+     * @param lockKey
+     * @param waitTime  等待时间
+     * @param leaseTime
+     * @param unit
+     * @return
+     */
+    public boolean tryLock(String lockKey, long waitTime, long leaseTime, TimeUnit unit) {
+        RLock lock = redissonClient.getLock(lockKey);
+        try {
+            return lock.tryLock(waitTime, leaseTime, unit);
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 释放锁
+     *
+     * @param lockKey
+     */
+    public void unlock(String lockKey) {
+        RLock lock = redissonClient.getLock(lockKey);
+        if (lock.isLocked()) {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @param invoker
+     * @param waitTime
+     * @param leaseTime
+     */
+    public void lockWithInvoke(Invoker invoker, long waitTime, long leaseTime) {
+        if (tryLock(invoker.getLockKey(), waitTime, leaseTime, TimeUnit.SECONDS)) {
+            try {
+                invoker.doInvoke();
+            } finally {
+                unlock(invoker.getLockKey());
+            }
+        }
+    }
+
 }
