@@ -41,7 +41,9 @@ alter table t_goods add version int default 0 not null comment '商品变更版�
 通过版本号约束并发更新
 
 * 基于redis
-
+```
+setnx + key超时时间
+```
 * 基于redisson
 
 * 基于zookeeper

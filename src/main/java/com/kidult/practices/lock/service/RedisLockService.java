@@ -1,6 +1,5 @@
 package com.kidult.practices.lock.service;
 
-import com.kidult.practices.lock.controller.RedisLockController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,7 +33,7 @@ public class RedisLockService {
      * @param lockTimeout       锁的超时时长
      * @param stock
      * @param subStockSpendTime 扣库存花费时长
-     *                          如果锁的超时时长小于扣库存时长，则锁会被再次获取（可以通过一个观察线程(watch dog)监视当前的线程是否已完成业务操作，如果没有则将锁的时长再次延长）
+     *                          如果锁的超时时长小于扣库存时长，则锁会被再次获取（可以通过一个观察线程(watch dog)监视当前的线程是否已完成业务操作，如果没有则将锁的超时时长再次延长）
      * @param threadName
      * @return
      */
