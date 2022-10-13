@@ -20,11 +20,13 @@ public class ZKLockService {
     @Autowired
     private CuratorFramework curatorFramework;
 
-    public void lockWithInvoke(String lockKey, Invoker invoker, long leaseTime, TimeUnit unit) {
+    public void lockWithInvoke(String lockKey, Invoker invoker, long leaseTime, TimeUnit unit, String threadName) {
         InterProcessMutex lock = new InterProcessMutex(curatorFramework, LOCK_PATH + "/" + lockKey);
         try {
             if (lock.acquire(leaseTime, unit)) {
+                log.info("线程" + threadName + "已获取到锁");
                 invoker.doInvoke();
+                log.info("线程" + threadName + "处理成功");
             }
         } catch (Exception e) {
             log.error("加锁异常,e:", e);

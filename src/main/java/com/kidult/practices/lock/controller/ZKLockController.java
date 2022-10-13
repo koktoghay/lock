@@ -80,14 +80,13 @@ public class ZKLockController {
                             Thread.sleep(5000);
                         } catch (Exception e) {
                         }
-                        log.info("threadName= {}, 处理成功", threadName);
                     }
 
                     @Override
                     public String getLockKey() {
                         return key;
                     }
-                }, lockTimeout, TimeUnit.SECONDS);
+                }, lockTimeout, TimeUnit.SECONDS, threadName);
             } catch (Exception e) {
                 log.error("subGoodsStock ex:", e);
             }
